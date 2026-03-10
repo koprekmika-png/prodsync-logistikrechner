@@ -6,8 +6,17 @@ import Btn from '../ui/Btn';
 
 export default function HistorieView() {
   const [historie, setHistorie] = useState<GespeicherteBerechnnung[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { setHistorie(historieLaden()); }, []);
+  useEffect(() => {
+    async function laden() {
+      setLoading(true);
+      const data = await historieLaden();
+      setHistorie(data);
+      setLoading(false);
+    }
+    laden();
+  }, []);
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -21,8 +30,15 @@ export default function HistorieView() {
         </p>
       </div>
 
+      {/* Loading */}
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#9CA3AF', fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>
+          Berechnungen werden geladen...
+        </div>
+      )}
+
       {/* Leerzustand */}
-      {historie.length === 0 && (
+      {!loading && historie.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#9CA3AF' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
           <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>
@@ -35,7 +51,7 @@ export default function HistorieView() {
       )}
 
       {/* Liste */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {!loading && <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {historie.map(eintrag => (
           <Card key={eintrag.id} style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -57,7 +73,7 @@ export default function HistorieView() {
             <Btn outline small onClick={() => alert('PDF Export folgt')}>PDF</Btn>
           </Card>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }

@@ -19,13 +19,12 @@ export default function RechnerView() {
   const typObj = GERUEST_TYPEN.find(t => t.id === gewTyp);
   const canStep2 = !!typObj && typObj.felder.every(f => masze[f] && parseFloat(masze[f]) > 0);
 
-  const handleBerechnen = () => {
-    const fuhrpark = fuhrparkLaden();
+  const handleBerechnen = async () => {
+    const fuhrpark = await fuhrparkLaden();
     const r = berechne(gewTyp!, masze, fuhrpark);
     if (!r) return;
     setErgebnis(r);
-    historieSpeichern({
-      id: Date.now().toString(),
+    await historieSpeichern({
       datum: new Date().toLocaleDateString('de'),
       projektname: `${typObj?.label} – ${masze.laenge}m × ${masze.hoehe}m`,
       geruesttyp: typObj?.label ?? '',

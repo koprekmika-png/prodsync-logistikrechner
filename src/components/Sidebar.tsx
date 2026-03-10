@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabase';
+
 interface SidebarProps {
   view: string;
   setView: (v: string) => void;
@@ -161,6 +163,24 @@ export default function Sidebar({ view, setView, collapsed, setCollapsed }: Side
             <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2, whiteSpace: 'nowrap' }}>
               developed by <span style={{ color: '#F97316' }}>ProdSync</span>
             </div>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              style={{
+                marginTop: 8,
+                width: '100%',
+                padding: '7px 0',
+                borderRadius: 8,
+                border: '1.5px solid #E5E7EB',
+                background: 'white',
+                color: '#6B7280',
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: "'DM Sans', sans-serif",
+                cursor: 'pointer',
+              }}
+            >
+              Abmelden
+            </button>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fuhrparkLaden, fuhrparkSpeichern } from '../../lib/storage';
+import { fuhrparkLaden, fuhrparkHinzufuegen, fuhrparkLoeschen } from '../../lib/storage';
 import type { Fahrzeug } from '../../lib/types';
 import Card from '../ui/Card';
 import Btn from '../ui/Btn';
@@ -21,22 +21,35 @@ export default function FuhrparkView() {
   const [formOffen, setFormOffen] = useState(false);
   const [neu, setNeu] = useState({ name: '', typ: '', nutzlast: '', ladeflaeche: '' });
   const [hoveredDelete, setHoveredDelete] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { setFuhrpark(fuhrparkLaden()); }, []);
+  useEffect(() => {
+    async function laden() {
+      setLoading(true);
+      const data = await fuhrparkLaden();
+      setFuhrpark(data);
+      setLoading(false);
+    }
+    laden();
+  }, []);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!neu.name || !neu.nutzlast) return;
-    const updated = [...fuhrpark, { ...neu, id: Date.now(), nutzlast: parseInt(neu.nutzlast) }];
+    await fuhrparkHinzufuegen({
+      name: neu.name,
+      typ: neu.typ,
+      nutzlast: parseInt(neu.nutzlast),
+      ladeflaeche: neu.ladeflaeche,
+    });
+    const updated = await fuhrparkLaden();
     setFuhrpark(updated);
-    fuhrparkSpeichern(updated);
     setNeu({ name: '', typ: '', nutzlast: '', ladeflaeche: '' });
     setFormOffen(false);
   };
 
-  const handleDelete = (id: number) => {
-    const updated = fuhrpark.filter(f => f.id !== id);
-    setFuhrpark(updated);
-    fuhrparkSpeichern(updated);
+  const handleDelete = async (id: number) => {
+    await fuhrparkLoeschen(id);
+    setFuhrpark(prev => prev.filter(f => f.id !== id));
   };
 
   return (
@@ -115,8 +128,15 @@ export default function FuhrparkView() {
         </Card>
       )}
 
+      {/* Loading */}
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#9CA3AF', fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>
+          Fuhrpark wird geladen...
+        </div>
+      )}
+
       {/* Leerzustand */}
-      {fuhrpark.length === 0 && (
+      {!loading && fuhrpark.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#9CA3AF' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>🚛</div>
           <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>
@@ -127,39 +147,41 @@ export default function FuhrparkView() {
       )}
 
       {/* Fahrzeugliste */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {fuhrpark.map(fz => (
-          <Card key={fz.id} style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ fontSize: 28, flexShrink: 0 }}>🚛</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#111', fontFamily: "'DM Sans', sans-serif" }}>
-                {fz.name}
+      {!loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {fuhrpark.map(fz => (
+            <Card key={fz.id} style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ fontSize: 28, flexShrink: 0 }}>🚛</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#111', fontFamily: "'DM Sans', sans-serif" }}>
+                  {fz.name}
+                </div>
+                <div style={{ fontSize: 12, color: '#6B7280', fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>
+                  {fz.typ} · {fz.nutzlast.toLocaleString('de')} kg Nutzlast
+                  {fz.ladeflaeche && ` · ${fz.ladeflaeche}`}
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: '#6B7280', fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>
-                {fz.typ} · {fz.nutzlast.toLocaleString('de')} kg Nutzlast
-                {fz.ladeflaeche && ` · ${fz.ladeflaeche}`}
-              </div>
-            </div>
-            <button
-              onClick={() => handleDelete(fz.id)}
-              onMouseEnter={() => setHoveredDelete(fz.id)}
-              onMouseLeave={() => setHoveredDelete(null)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 16,
-                color: hoveredDelete === fz.id ? '#EF4444' : '#9CA3AF',
-                padding: '4px 8px',
-                transition: 'color 0.15s',
-              }}
-              title="Fahrzeug löschen"
-            >
-              ✕
-            </button>
-          </Card>
-        ))}
-      </div>
+              <button
+                onClick={() => handleDelete(fz.id)}
+                onMouseEnter={() => setHoveredDelete(fz.id)}
+                onMouseLeave={() => setHoveredDelete(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 16,
+                  color: hoveredDelete === fz.id ? '#EF4444' : '#9CA3AF',
+                  padding: '4px 8px',
+                  transition: 'color 0.15s',
+                }}
+                title="Fahrzeug löschen"
+              >
+                ✕
+              </button>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
