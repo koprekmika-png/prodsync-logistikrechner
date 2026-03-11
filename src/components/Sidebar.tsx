@@ -19,17 +19,19 @@ export default function Sidebar({ view, setView, collapsed, setCollapsed, trialD
   const w = collapsed ? 64 : 220;
   const [firmenname, setFirmenname] = useState('');
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       setEmail(user.email ?? '');
       supabase.from('profiles')
-        .select('firmenname')
+        .select('firmenname, name')
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
           if (data?.firmenname) setFirmenname(data.firmenname);
+          if (data?.name) setName(data.name);
         });
     });
   }, []);
@@ -173,7 +175,7 @@ export default function Sidebar({ view, setView, collapsed, setCollapsed, trialD
         {!collapsed && (
           <div style={{ overflow: 'hidden' }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#111111', whiteSpace: 'nowrap' }}>
-              {email}
+              {name || email}
             </div>
             <div style={{ fontSize: 11, color: '#6B7280', whiteSpace: 'nowrap' }}>
               {firmenname}

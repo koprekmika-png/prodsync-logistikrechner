@@ -8,6 +8,7 @@ export default function AuthView() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firmenname, setFirmenname] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,7 +46,7 @@ export default function AuthView() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { firmenname } },
+        options: { data: { firmenname, name } },
       });
       if (error) {
         setError(error.message);
@@ -120,6 +121,14 @@ export default function AuthView() {
         <div>
           {mode === 'register' && (
             <>
+              <label style={labelStyle}>Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="z.B. Max Mustermann"
+                style={inputStyle}
+              />
               <label style={labelStyle}>Firmenname</label>
               <input
                 type="text"
