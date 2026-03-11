@@ -1,29 +1,41 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import type { User } from '@supabase/supabase-js';
+import { getSubscriptionStatus } from './lib/subscription';
+import type { SubscriptionStatus } from './lib/subscription';
 import Sidebar from './components/Sidebar';
 import RechnerView from './components/views/RechnerView';
 import FuhrparkView from './components/views/FuhrparkView';
 import HistorieView from './components/views/HistorieView';
 import AuthView from './components/views/AuthView';
+import PaywallView from './components/views/PaywallView';
 
 export default function App() {
   const [view, setView] = useState('rechner');
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        getSubscriptionStatus().then(setSubscription);
+      }
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        getSubscriptionStatus().then(setSubscription);
+      } else {
+        setSubscription(null);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => authSub.unsubscribe();
   }, []);
 
   if (loading) return (
@@ -34,6 +46,10 @@ export default function App() {
 
   if (!user) return <AuthView />;
 
+  if (user && subscription && !subscription.isActive) {
+    return <PaywallView />;
+  }
+
   const sidebarWidth = collapsed ? 64 : 220;
 
   return (
@@ -43,6 +59,7 @@ export default function App() {
         setView={setView}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
+        trialDaysLeft={subscription?.trialDaysLeft}
       />
       <main style={{
         marginLeft: sidebarWidth,

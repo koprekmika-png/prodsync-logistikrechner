@@ -5,6 +5,7 @@ interface SidebarProps {
   setView: (v: string) => void;
   collapsed: boolean;
   setCollapsed: (fn: (c: boolean) => boolean) => void;
+  trialDaysLeft?: number;
 }
 
 const NAV_ITEMS = [
@@ -13,7 +14,7 @@ const NAV_ITEMS = [
   { id: 'historie', icon: '📋', label: 'Berechnungen' },
 ];
 
-export default function Sidebar({ view, setView, collapsed, setCollapsed }: SidebarProps) {
+export default function Sidebar({ view, setView, collapsed, setCollapsed, trialDaysLeft }: SidebarProps) {
   const w = collapsed ? 64 : 220;
 
   return (
@@ -163,6 +164,16 @@ export default function Sidebar({ view, setView, collapsed, setCollapsed }: Side
             <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2, whiteSpace: 'nowrap' }}>
               developed by <span style={{ color: '#F97316' }}>ProdSync</span>
             </div>
+            {trialDaysLeft !== undefined && trialDaysLeft > 0 && (
+              <div style={{
+                background: '#FFF7ED', border: '1px solid #F97316',
+                borderRadius: 8, padding: '6px 10px', marginBottom: 8,
+                fontSize: 11, color: '#EA580C', fontWeight: 600,
+                fontFamily: "'DM Sans', sans-serif", textAlign: 'center',
+              }}>
+                🕐 Noch {trialDaysLeft} Tag{trialDaysLeft !== 1 ? 'e' : ''} gratis
+              </div>
+            )}
             <button
               onClick={() => supabase.auth.signOut()}
               style={{
