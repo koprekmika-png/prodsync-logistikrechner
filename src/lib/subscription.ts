@@ -23,14 +23,20 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
     return { status: 'active', trialDaysLeft: 0, isActive: true };
   }
 
-  // Trial berechnen
-  const trialStart = new Date(profile.trial_start);
-  const now = new Date();
-  const daysPassed = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
-  const trialDaysLeft = Math.max(0, 7 - daysPassed);
+  // Explizit expired oder cancelled
+  if (profile.subscription_status === 'expired' || profile.subscription_status === 'cancelled') {
+    return { status: 'expired', trialDaysLeft: 0, isActive: false };
+  }
 
-  if (trialDaysLeft > 0) {
-    return { status: 'trial', trialDaysLeft, isActive: true };
+  // Trial berechnen (nur wenn status === 'trial')
+  if (profile.trial_start) {
+    const trialStart = new Date(profile.trial_start);
+    const now = new Date();
+    const daysPassed = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
+    const trialDaysLeft = Math.max(0, 7 - daysPassed);
+    if (trialDaysLeft > 0) {
+      return { status: 'trial', trialDaysLeft, isActive: true };
+    }
   }
 
   return { status: 'expired', trialDaysLeft: 0, isActive: false };
