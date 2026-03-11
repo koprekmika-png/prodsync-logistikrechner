@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface SidebarProps {
@@ -16,6 +17,22 @@ const NAV_ITEMS = [
 
 export default function Sidebar({ view, setView, collapsed, setCollapsed, trialDaysLeft }: SidebarProps) {
   const w = collapsed ? 64 : 220;
+  const [firmenname, setFirmenname] = useState('');
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      setEmail(user.email ?? '');
+      supabase.from('profiles')
+        .select('firmenname')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.firmenname) setFirmenname(data.firmenname);
+        });
+    });
+  }, []);
 
   return (
     <div style={{
@@ -156,10 +173,10 @@ export default function Sidebar({ view, setView, collapsed, setCollapsed, trialD
         {!collapsed && (
           <div style={{ overflow: 'hidden' }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#111111', whiteSpace: 'nowrap' }}>
-              Max Mustermann
+              {email}
             </div>
             <div style={{ fontSize: 11, color: '#6B7280', whiteSpace: 'nowrap' }}>
-              Gerüstbau GmbH
+              {firmenname}
             </div>
             <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2, whiteSpace: 'nowrap' }}>
               developed by <span style={{ color: '#F97316' }}>ProdSync</span>
