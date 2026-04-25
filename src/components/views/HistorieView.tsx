@@ -3,6 +3,7 @@ import { historieLaden } from '../../lib/storage';
 import type { GespeicherteBerechnnung } from '../../lib/types';
 import Card from '../ui/Card';
 import Btn from '../ui/Btn';
+import { exportHistoriePdf } from '../../lib/pdfExport';
 
 export default function HistorieView() {
   const [historie, setHistorie] = useState<GespeicherteBerechnnung[]>([]);
@@ -70,7 +71,7 @@ export default function HistorieView() {
                 {eintrag.touren} Tour{eintrag.touren !== 1 ? 'en' : ''} · {eintrag.fahrzeug}
               </div>
             </div>
-            <Btn outline small onClick={() => alert('PDF Export folgt')}>PDF</Btn>
+            <Btn outline small onClick={() => exportHistoriePdf(eintrag)}>PDF</Btn>
           </Card>
         ))}
       </div>}

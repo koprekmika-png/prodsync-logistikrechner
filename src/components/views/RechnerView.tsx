@@ -3,6 +3,7 @@ import { berechne } from '../../lib/berechne';
 import { fuhrparkLaden, historieSpeichern } from '../../lib/storage';
 import { GERUEST_TYPEN, FELD_CONFIG } from '../../lib/constants';
 import type { Berechnungsergebnis } from '../../lib/types';
+import { exportPdf } from '../../lib/pdfExport';
 import Card from '../ui/Card';
 import Btn from '../ui/Btn';
 import NumInput from '../ui/NumInput';
@@ -15,6 +16,8 @@ export default function RechnerView() {
   const [masze, setMasze] = useState<Record<string, string>>({});
   const [ergebnis, setErgebnis] = useState<Berechnungsergebnis | null>(null);
   const [showRechenweg, setShowRechenweg] = useState(false);
+  const [showTeilen, setShowTeilen] = useState(false);
+  const [kopiert, setKopiert] = useState(false);
 
   const typObj = GERUEST_TYPEN.find(t => t.id === gewTyp);
   const canStep2 = !!typObj && typObj.felder.every(f => masze[f] && parseFloat(masze[f]) > 0);
@@ -36,7 +39,36 @@ export default function RechnerView() {
   };
 
   const reset = () => {
-    setStep(0); setGewTyp(null); setMasze({}); setErgebnis(null); setShowRechenweg(false);
+    setStep(0); setGewTyp(null); setMasze({}); setErgebnis(null); setShowRechenweg(false); setShowTeilen(false); setKopiert(false);
+  };
+
+  const generiereNachricht = (): string => {
+    if (!ergebnis || !typObj) return '';
+    const opt = ergebnis.fahrzeuge[0];
+    const masze_str = Object.values(masze).map(v => `${v} m`).join(' × ');
+    let text = `📦 Gerüst-Logistik\n`;
+    text += `Typ: ${typObj.label} (${masze_str})\n`;
+    text += `Gesamtgewicht: ${ergebnis.gesamt.toLocaleString('de')} kg\n\n`;
+    text += `🚛 Fahrzeug: ${opt.name}\n`;
+    text += `Nutzlast: ${opt.nutzlast.toLocaleString('de')} kg\n\n`;
+    text += `📋 Touren: ${opt.touren}\n`;
+    if (opt.touren > 1) {
+      text += `• Tour 1–${opt.touren - 1}: voll beladen (${opt.nutzlast.toLocaleString('de')} kg)\n`;
+      text += `• Tour ${opt.touren}: ${opt.beladen}% beladen (${Math.round(ergebnis.gesamt - (opt.touren - 1) * opt.nutzlast).toLocaleString('de')} kg)`;
+    } else {
+      text += `• 1 Tour: ${opt.beladen}% beladen (${ergebnis.gesamt.toLocaleString('de')} kg)`;
+    }
+    return text;
+  };
+
+  const handleKopieren = async () => {
+    try {
+      await navigator.clipboard.writeText(generiereNachricht());
+      setKopiert(true);
+      setTimeout(() => setKopiert(false), 2000);
+    } catch {
+      // fallback
+    }
   };
 
   return (
@@ -332,7 +364,68 @@ export default function RechnerView() {
           {/* Aktionen */}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 12 }}>
             <Btn outline onClick={reset}>Neue Berechnung</Btn>
-            <Btn onClick={() => alert('PDF Export folgt in Phase 2')}>Als PDF exportieren</Btn>
+            <Btn outline onClick={() => setShowTeilen(true)}>💬 Teilen</Btn>
+            <Btn onClick={() => exportPdf(ergebnis, typObj?.label ?? 'Berechnung', typObj?.label ?? '')}>Als PDF exportieren</Btn>
+          </div>
+        </div>
+      )}
+
+      {/* Teilen-Modal */}
+      {showTeilen && ergebnis && (
+        <div
+          onClick={() => setShowTeilen(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'white', borderRadius: 16, padding: 28,
+              width: 420, maxWidth: '92vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#111', fontFamily: "'DM Sans', sans-serif" }}>
+                Nachricht kopieren
+              </div>
+              <button
+                onClick={() => setShowTeilen(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9CA3AF', lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+            <p style={{ fontSize: 12, color: '#6B7280', fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
+              Einfach kopieren und direkt in WhatsApp, Signal o.ä. einfügen.
+            </p>
+            <textarea
+              readOnly
+              value={generiereNachricht()}
+              style={{
+                width: '100%', height: 200, resize: 'none',
+                background: '#F9FAFB', border: '1.5px solid #E5E7EB',
+                borderRadius: 10, padding: '12px 14px',
+                fontSize: 13, fontFamily: "'DM Mono', monospace",
+                color: '#111', lineHeight: 1.6, outline: 'none',
+              }}
+            />
+            <button
+              onClick={handleKopieren}
+              style={{
+                marginTop: 12, width: '100%',
+                background: kopiert ? '#22C55E' : '#F97316',
+                color: 'white', border: 'none', borderRadius: 10,
+                padding: '12px 0', fontSize: 14, fontWeight: 700,
+                fontFamily: "'DM Sans', sans-serif", cursor: 'pointer',
+                transition: 'background 0.2s',
+              }}
+            >
+              {kopiert ? '✓ Kopiert!' : 'Text kopieren'}
+            </button>
           </div>
         </div>
       )}
