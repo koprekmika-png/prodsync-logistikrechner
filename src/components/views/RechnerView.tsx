@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { berechne } from '../../lib/berechne';
 import { fuhrparkLaden, historieSpeichern } from '../../lib/storage';
 import { GERUEST_TYPEN, FELD_CONFIG } from '../../lib/constants';
@@ -72,6 +73,7 @@ export default function RechnerView() {
   };
 
   return (
+    <>
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
@@ -370,65 +372,68 @@ export default function RechnerView() {
         </div>
       )}
 
-      {/* Teilen-Modal */}
-      {showTeilen && ergebnis && (
+    </div>
+
+    {/* Teilen-Modal – via Portal direkt am body */}
+    {showTeilen && ergebnis && createPortal(
+      <div
+        onClick={() => setShowTeilen(false)}
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999,
+        }}
+      >
         <div
-          onClick={() => setShowTeilen(false)}
+          onClick={e => e.stopPropagation()}
           style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000,
+            background: 'white', borderRadius: 16, padding: 28,
+            width: 420, maxWidth: '92vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
           }}
         >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: 'white', borderRadius: 16, padding: 28,
-              width: 420, maxWidth: '92vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#111', fontFamily: "'DM Sans', sans-serif" }}>
-                Nachricht kopieren
-              </div>
-              <button
-                onClick={() => setShowTeilen(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9CA3AF', lineHeight: 1 }}
-              >
-                ×
-              </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#111', fontFamily: "'DM Sans', sans-serif" }}>
+              Nachricht kopieren
             </div>
-            <p style={{ fontSize: 12, color: '#6B7280', fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
-              Einfach kopieren und direkt in WhatsApp, Signal o.ä. einfügen.
-            </p>
-            <textarea
-              readOnly
-              value={generiereNachricht()}
-              style={{
-                width: '100%', height: 200, resize: 'none',
-                background: '#F9FAFB', border: '1.5px solid #E5E7EB',
-                borderRadius: 10, padding: '12px 14px',
-                fontSize: 13, fontFamily: "'DM Mono', monospace",
-                color: '#111', lineHeight: 1.6, outline: 'none',
-              }}
-            />
             <button
-              onClick={handleKopieren}
-              style={{
-                marginTop: 12, width: '100%',
-                background: kopiert ? '#22C55E' : '#F97316',
-                color: 'white', border: 'none', borderRadius: 10,
-                padding: '12px 0', fontSize: 14, fontWeight: 700,
-                fontFamily: "'DM Sans', sans-serif", cursor: 'pointer',
-                transition: 'background 0.2s',
-              }}
+              onClick={() => setShowTeilen(false)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9CA3AF', lineHeight: 1 }}
             >
-              {kopiert ? '✓ Kopiert!' : 'Text kopieren'}
+              ×
             </button>
           </div>
+          <p style={{ fontSize: 12, color: '#6B7280', fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>
+            Einfach kopieren und direkt in WhatsApp, Signal o.ä. einfügen.
+          </p>
+          <textarea
+            readOnly
+            value={generiereNachricht()}
+            style={{
+              width: '100%', height: 200, resize: 'none',
+              background: '#F9FAFB', border: '1.5px solid #E5E7EB',
+              borderRadius: 10, padding: '12px 14px',
+              fontSize: 13, fontFamily: "'DM Mono', monospace",
+              color: '#111', lineHeight: 1.6, outline: 'none',
+            }}
+          />
+          <button
+            onClick={handleKopieren}
+            style={{
+              marginTop: 12, width: '100%',
+              background: kopiert ? '#22C55E' : '#F97316',
+              color: 'white', border: 'none', borderRadius: 10,
+              padding: '12px 0', fontSize: 14, fontWeight: 700,
+              fontFamily: "'DM Sans', sans-serif", cursor: 'pointer',
+              transition: 'background 0.2s',
+            }}
+          >
+            {kopiert ? '✓ Kopiert!' : 'Text kopieren'}
+          </button>
         </div>
-      )}
-    </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
