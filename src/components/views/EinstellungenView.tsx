@@ -80,9 +80,10 @@ export default function EinstellungenView({ subscriptionStatus, trialDaysLeft, o
     }
 
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    const urlWithBust = `${publicUrl}?t=${Date.now()}`;
     await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
-    setAvatarUrl(publicUrl);
-    onAvatarChange?.(publicUrl);
+    setAvatarUrl(urlWithBust);
+    onAvatarChange?.(urlWithBust);
     setAvatarUploading(false);
   };
 
