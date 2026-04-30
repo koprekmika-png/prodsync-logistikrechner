@@ -7,15 +7,17 @@ interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (fn: (c: boolean) => boolean) => void;
   trialDaysLeft?: number;
+  avatarUrl?: string;
 }
 
 const NAV_ITEMS = [
-  { id: 'rechner',  icon: '⚡', label: 'Logistikrechner' },
-  { id: 'fuhrpark', icon: '🚛', label: 'Mein Fuhrpark' },
-  { id: 'historie', icon: '📋', label: 'Berechnungen' },
+  { id: 'rechner',       icon: '⚡', label: 'Logistikrechner' },
+  { id: 'fuhrpark',      icon: '🚛', label: 'Mein Fuhrpark' },
+  { id: 'historie',      icon: '📋', label: 'Berechnungen' },
+  { id: 'einstellungen', icon: '⚙️', label: 'Einstellungen' },
 ];
 
-export default function Sidebar({ view, setView, collapsed, setCollapsed, trialDaysLeft }: SidebarProps) {
+export default function Sidebar({ view, setView, collapsed, setCollapsed, trialDaysLeft, avatarUrl }: SidebarProps) {
   const w = collapsed ? 64 : 220;
   const [firmenname, setFirmenname] = useState('');
   const [email, setEmail] = useState('');
@@ -169,8 +171,13 @@ export default function Sidebar({ view, setView, collapsed, setCollapsed, trialD
           justifyContent: 'center',
           fontSize: 18,
           flexShrink: 0,
+          overflow: 'hidden',
+          border: avatarUrl ? '2px solid #F97316' : 'none',
         }}>
-          👷
+          {avatarUrl
+            ? <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : '👷'
+          }
         </div>
         {!collapsed && (
           <div style={{ overflow: 'hidden' }}>
